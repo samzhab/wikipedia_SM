@@ -46,32 +46,30 @@ def make_doi_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path, 'w') # create nt file same name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
-  crossref_uri = URI("https://api.crossref.org/v1/works/http://dx.doi.org/")
+  crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   vocab_url = ' has_title '
-  Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |http|
-    while line = tsv_file.gets
-      if line.split(' ').last.include?("\/")
-        id = line.split(' ').last if line.split(' ').last.include?("10.")
-        crossref_url = "https://api.crossref.org/v1/works/http://dx.doi.org/"
-        formed_uri = crossref_url + id
-        formed_uri = Addressable::URI.parse(Addressable::URI.encode(formed_uri.strip))
-        puts '[INFO] processing ---> ' + formed_uri.to_s
-        formed_uri = URI(formed_uri)
-        request = Net::HTTP::Get.new formed_uri
-        response = Net::HTTP.get_response(formed_uri)
-        response = check_response(response, id, crossref_url)
-        puts '[ERROR] resource not found' if !response
-        next unless response
-        json_response = JSON.parse(response.body)
-        case json_response['status']
-          when 'ok'
-            title = json_response['message']['title']
-          title.each do |title|
-            n_triple = id + vocab_url + title
-            puts n_triple
+  Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
+    while (line = tsv_file.gets)
+      next unless line.split(' ').last.include?("\/")
+      id = line.split(' ').last if line.split(' ').last.include?('10.')
+      crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+      formed_uri = crossref_url + id
+      formed_uri = Addressable::URI.encode(formed_uri.strip)
+      formed_uri = Addressable::URI.parse(formed_uri)
+      puts '[INFO] processing ---> ' + formed_uri.to_s
+      formed_uri = URI(formed_uri)
+      response = Net::HTTP.get_response(formed_uri)
+      response = check_response(response, id, crossref_url)
+      puts '[ERROR] resource not found' unless response
+      next unless response
+      json_response = JSON.parse(response.body)
+      case json_response['status']
+      when 'ok'
+        titles = json_response['message']['title']
+        titles.each do |title|
+          n_triple = id + vocab_url + title
+          puts n_triple
           nt_file.puts n_triple
-          end
-        else
         end
       end
     end
@@ -79,7 +77,6 @@ def make_doi_nt(tsv_file_name)
   nt_file.close
   tsv_file.close
 end
-
 
 def check_response(response, id, c_url)
   case response
