@@ -60,6 +60,7 @@ def make_doi_nt(tsv_file_name)
         request = Net::HTTP::Get.new formed_uri
         response = Net::HTTP.get_response(formed_uri)
         response = check_response(response, id, crossref_url)
+        puts '[ERROR] resource not found' if !response
         next unless response
         json_response = JSON.parse(response.body)
         case json_response['status']
