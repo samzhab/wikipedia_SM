@@ -11,7 +11,8 @@ def start
     puts '[INPUT] what would you like to do with these? \
                   Z - make page_id triples
                   X - make doi title triples'
-    choice = gets.chomp
+   # choice = gets.chomp
+    choice = 'x'
     case choice
     when 'z'
       make_page_id_nt(tsv_file_name)
