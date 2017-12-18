@@ -47,7 +47,7 @@ def make_doi_nt(tsv_file_name)
   nt_file = File.new(nt_path, 'w') # create nt file same name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
-  vocab_url = ' has_title '
+  property_url = "http://purl.org/dc/terms/title"
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
     while (line = tsv_file.gets)
       next unless line.split(' ').last.include?("\/")
@@ -67,7 +67,7 @@ def make_doi_nt(tsv_file_name)
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
-          n_triple = id + vocab_url + title
+          n_triple = "<" + id + ">" + " <" + property_url + "> " + "\"" + title + "\"."
           puts n_triple
           nt_file.puts n_triple
         end
