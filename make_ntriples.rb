@@ -68,7 +68,7 @@ def make_doi_nt(tsv_file_name)
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
-          n_triple = "<" + id + ">" + " <" + property_url + "> " + "\"" + title + "\"."
+          n_triple = "<http://dx.doi.org/" + id + ">" + " <" + property_url + "> " + "\"" + title + "\"."
           puts n_triple
           nt_file.puts n_triple
         end
