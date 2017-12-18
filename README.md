@@ -1,4 +1,4 @@
-##Wikipedia Scholarly Article Citations Semantic Manipulation
+## Wikipedia Scholarly Article Citations Semantic Manipulation
 
 available tasks
 * extract page_id and id + serialize wikipedia scholarly articles using dataset from https://figshare.com/articles/Wikipedia_Scholarly_Article_Citations/1299540 and save as n-triples.
