@@ -47,6 +47,12 @@ def make_doi_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path, 'w') # create nt file same name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  # file_name = gets + Time.now.to_s
+  # file = File.new(file_name, "w")
+  # puts "content"
+  # file.puts file_name
+  # file.close
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   property_url = "http://purl.org/dc/terms/title"
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
@@ -60,8 +66,9 @@ def make_doi_nt(tsv_file_name)
       puts '[INFO] processing ---> ' + formed_uri.to_s
       formed_uri = URI(formed_uri)
       response = Net::HTTP.get_response(formed_uri)
-      response = check_response(response, id, crossref_url)
+      response = check_response(response, id, crossref_url, log_file)
       puts '[ERROR] resource not found' unless response
+      log_file.puts '[ERROR] resource not found for '  + id.to_s unless response
       next unless response
       json_response = JSON.parse(response.body)
       case json_response['status']
@@ -71,15 +78,17 @@ def make_doi_nt(tsv_file_name)
           n_triple = "<http://dx.doi.org/" + id + ">" + " <" + property_url + "> " + "\"" + title + "\"."
           puts n_triple
           nt_file.puts n_triple
+          log_file.puts '[INFO] saved triple ---> ' + n_triple
         end
       end
     end
   end
   nt_file.close
   tsv_file.close
+  log_file.close
 end
 
-def check_response(response, id, c_url)
+def check_response(response, id, c_url, log_file)
   case response
   when Net::HTTPSuccess then
     response
@@ -93,8 +102,9 @@ def check_response(response, id, c_url)
       formed_uri = Addressable::URI.parse(formed_uri)
       # formed_uri = URI.parse(URI.encode(formed_uri.strip))
       puts '[INFO] re-trying again as --- ' + formed_uri.to_s
+      log_file.puts '[ERROR] resource not found' unless response
       response = Net::HTTP.get_response(formed_uri)
-      check_response(response, id, c_url) unless formed_uri != c_url
+      check_response(response, id, c_url, log_file) unless formed_uri != c_url
     end
   end
 end
