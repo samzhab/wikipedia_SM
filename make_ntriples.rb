@@ -58,7 +58,8 @@ def make_doi_nt(tsv_file_name)
       formed_uri = crossref_url + id
       formed_uri = Addressable::URI.encode(formed_uri.strip)
       formed_uri = Addressable::URI.parse(formed_uri)
-      puts '[INFO] processing ---> ' + formed_uri.to_s
+      puts '[INFO] processing ---> ' + formed_uri.to_s + ' from tsv file ' +
+           tsv_file.to_s
       formed_uri = URI(formed_uri)
       response = Net::HTTP.get_response(formed_uri)
       response = check_response(response, id, crossref_url, log_file)
@@ -70,8 +71,9 @@ def make_doi_nt(tsv_file_name)
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
+          # puts title.is_a? String
           n_triple = '<http://dx.doi.org/' + id + '>' + ' <' + property_url +
-                     '> ' + '"' + title + '".'
+                     '> ' + title.inspect.to_s + '.'
           puts n_triple
           nt_file.puts n_triple
           log_file.puts '[INFO] saved triple ---> ' + n_triple
