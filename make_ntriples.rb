@@ -25,7 +25,7 @@ end
 
 def make_page_id_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
-  nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without .tsv
+  nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without .
   puts '[INFO] processing --- ' + tsv_file_name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   while (line = tsv_file.gets)
@@ -45,7 +45,8 @@ end
 
 def make_doi_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
-  nt_file = File.new(nt_path, 'w') # create nt file same name
+  # nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without
+  nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
