@@ -75,7 +75,8 @@ def make_doi_nt(tsv_file_name)
                      '> ' + title.inspect.to_s + '.'
           nt_file.puts n_triple
           log_file.puts '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
-                        n_triple + ' using doi [' + id + '] from ' + tsv_file.to_s
+                        n_triple + ' using doi [' + id + '] from [' +
+                        tsv_file_name + ']'
         end
       end
     end
