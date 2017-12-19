@@ -58,7 +58,7 @@ def make_doi_nt(tsv_file_name)
       formed_uri = crossref_url + id
       formed_uri = Addressable::URI.encode(formed_uri.strip)
       formed_uri = Addressable::URI.parse(formed_uri)
-      puts '[START] processing ---> ' + id + ' from [' +
+      puts '[INFO] processing ---> ' + id + ' from [' +
            tsv_file_name.to_s + ']'
       puts '[INFO] looking for resource ---> ' + formed_uri
       formed_uri = URI(formed_uri)
