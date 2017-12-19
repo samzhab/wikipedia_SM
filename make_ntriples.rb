@@ -6,7 +6,7 @@ require 'addressable'
 def start
   tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
   tsv_files.each do |tsv_file_name|
-    next if (tsv_file_name == '.') || (tsv_file_name == '..')
+    next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
     puts '[INFO] found --- ' + tsv_file_name + ' ready to process'
     puts '[INPUT] what would you like to do with these? \
                   Z - make page_id triples
@@ -65,18 +65,17 @@ def make_doi_nt(tsv_file_name)
       response = check_response(response, id, crossref_url, log_file)
       puts '[ERROR] resource not found ' unless response
       log_file.puts '[ERROR] resource not found for ' + id.to_s unless response
-      next unless response
+      next unless response # skip to next line if no resource / response
       json_response = JSON.parse(response.body)
       case json_response['status']
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
-          # puts title.is_a? String
           n_triple = '<http://dx.doi.org/' + id + '>' + ' <' + property_url +
                      '> ' + title.inspect.to_s + '.'
-          puts n_triple
           nt_file.puts n_triple
-          log_file.puts '[INFO] saved triple ---> ' + n_triple
+          log_file.puts '[INFO] [' + Time.now.to_s '] saved triple ---> ' +
+                        n_triple + ' using doi [' + id + '] from ' + tsv_file
         end
       end
     end
