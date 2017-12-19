@@ -98,11 +98,11 @@ def check_response(response, recheck_id, c_url, log_file)
     recheck_id = recheck_id.join('/')
     formed_uri = Addressable::URI.encode((c_url + recheck_id).strip)
     formed_uri = Addressable::URI.parse(formed_uri)
-    puts c_url
     # formed_uri = URI.parse(URI.encode(formed_uri.strip))
     puts '[INFO] re-trying again as --- ' + formed_uri.to_s
+    formed_uri = URI(formed_uri)
     response = Net::HTTP.get_response(formed_uri)
-    check_response(response, id, c_url, log_file) unless formed_uri != c_url
+    check_response(response, recheck_id, c_url, log_file) unless formed_uri == c_url
   end
 end
 start
