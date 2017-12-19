@@ -7,11 +7,11 @@ def start
   tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
   tsv_files.each do |tsv_file_name|
     next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
-    puts '[INFO] found --- ' + tsv_file_name + ' ready to process'
+    puts '[INFO] found --- ' + tsv_file_name
     puts '[INPUT] what would you like to do with these? \
                   Z - make page_id triples
                   X - make doi title triples'
-    # choice = gets.chomp
+    # choice = gets.chomp                   # uncomment for user interaction
     choice = 'x'
     case choice
     when 'z'
@@ -25,7 +25,7 @@ end
 
 def make_page_id_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
-  nt_file = File.new(nt_path, 'w') # create nt file same name
+  nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without .tsv
   puts '[INFO] processing --- ' + tsv_file_name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   while (line = tsv_file.gets)
@@ -58,8 +58,9 @@ def make_doi_nt(tsv_file_name)
       formed_uri = crossref_url + id
       formed_uri = Addressable::URI.encode(formed_uri.strip)
       formed_uri = Addressable::URI.parse(formed_uri)
-      puts '[INFO] processing ---> ' + formed_uri.to_s + ' from [' +
+      puts '[INFO] processing ---> ' + id + ' from [' +
            tsv_file_name.to_s + ']'
+      puts '[INFO] looking for resource ---> ' + formed_uri
       formed_uri = URI(formed_uri)
       response = Net::HTTP.get_response(formed_uri)
       response = check_response(response, id, crossref_url, log_file)
@@ -92,7 +93,7 @@ def check_response(response, recheck_id, c_url, log_file)
     response
   when Net::HTTPNotFound then
     # split id and try again
-    # :TODO handle deeper splits
+    # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
     recheck_id = recheck_id.split('/')
     recheck_id.pop # remove last part
     recheck_id = recheck_id.join('/')
@@ -102,7 +103,8 @@ def check_response(response, recheck_id, c_url, log_file)
     puts '[INFO] re-trying again as --- ' + formed_uri.to_s
     formed_uri = URI(formed_uri)
     response = Net::HTTP.get_response(formed_uri)
-    check_response(response, recheck_id, c_url, log_file) unless formed_uri == c_url
+    check_response(response, recheck_id, c_url, log_file) unless
+    formed_uri.to_s == c_url.to_s
   end
 end
 start
