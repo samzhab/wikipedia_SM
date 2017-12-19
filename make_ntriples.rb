@@ -59,7 +59,7 @@ def make_doi_nt(tsv_file_name)
       formed_uri = Addressable::URI.encode(formed_uri.strip)
       formed_uri = Addressable::URI.parse(formed_uri)
       puts '[INFO] processing ---> ' + formed_uri.to_s + ' from [' +
-           tsv_file.to_s + ']'
+           tsv_file_name.to_s + ']'
       formed_uri = URI(formed_uri)
       response = Net::HTTP.get_response(formed_uri)
       response = check_response(response, id, crossref_url, log_file)
