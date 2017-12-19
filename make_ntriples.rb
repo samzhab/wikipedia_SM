@@ -74,8 +74,8 @@ def make_doi_nt(tsv_file_name)
           n_triple = '<http://dx.doi.org/' + id + '>' + ' <' + property_url +
                      '> ' + title.inspect.to_s + '.'
           nt_file.puts n_triple
-          log_file.puts '[INFO] [' + Time.now.to_s '] saved triple ---> ' +
-                        n_triple + ' using doi [' + id + '] from ' + tsv_file
+          log_file.puts '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
+                        n_triple + ' using doi [' + id + '] from ' + tsv_file.to_s
         end
       end
     end
