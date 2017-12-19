@@ -26,7 +26,7 @@ end
 def make_page_id_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without .tsv
-  puts '[START] processing --- ' + tsv_file_name
+  puts '[INFO] processing --- ' + tsv_file_name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   while (line = tsv_file.gets)
     page_id = line.split(' ').first unless line.split(' ').first == 'page_id'
