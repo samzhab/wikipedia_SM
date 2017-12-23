@@ -39,17 +39,21 @@ def make_page_id_nt(tsv_file_name)
                  page_id +
                  ">\t<http://lod.openaire.eu/vocab/resOriginalID>\t"\
                  '<http://dx.doi.org/' + id + '>.'
-      log_file.puts '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
+      message = '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using doi [' + id + '] from [' +
                    tsv_file_name + ']'
+      log_file.puts message
+      puts message
     else
       n_triple = '<http://en.wikipedia.org/wiki?curid=' +
                  page_id +
                  ">\t<http://lod.openaire.eu/vocab/resOriginalID>\t\"" +
                  id + '".'
-      log_file.puts '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
+      message =  '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using isbn [' + id + '] from [' +
                    tsv_file_name + ']'
+      log_file.puts message
+      puts message
     end
     nt_file.puts n_triple
   end
