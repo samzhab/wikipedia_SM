@@ -30,35 +30,36 @@ def make_page_id_nt(tsv_file_name)
   puts '[INFO] processing --- ' + tsv_file_name
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  log_file.puts '[INFO] [' + Time.now.to_s + '] started with ---> ' +
+               tsv_file_name
   while (line = tsv_file.gets)
     page_id = line.split(' ').first unless line.split(' ').first == 'page_id'
     id = line.split(' ').last unless line.split(' ').last == 'id'
     next unless page_id # skip first line from tsv file
-    if id.include?('10.')
+    if id.include?('10.')  # doi id
       n_triple = '<http://en.wikipedia.org/wiki?curid=' +
                  page_id +
-                 ">\t<http://lod.openaire.eu/vocab/resOriginalID>\t"\
+                 "> <http://lod.openaire.eu/vocab/resOriginalID> "\
                  '<http://dx.doi.org/' + id + '>.'
       message = '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using doi [' + id + '] from [' +
                    tsv_file_name + ']'
-      log_file.puts message
       puts message
-    else
+    else                  # isbn id
       n_triple = '<http://en.wikipedia.org/wiki?curid=' +
                  page_id +
-                 ">\t<http://lod.openaire.eu/vocab/resOriginalID>\t\"" +
+                 "> <http://lod.openaire.eu/vocab/resOriginalID> \"" +
                  id + '".'
       message =  '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using isbn [' + id + '] from [' +
                    tsv_file_name + ']'
-      log_file.puts message
       puts message
     end
     nt_file.puts n_triple
   end
   puts '[END] finished with --- ' + tsv_file_name
-  log_file.puts '[END] finished with --- ' + tsv_file_name
+  log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> ' +
+              tsv_file_name
   nt_file.close
   tsv_file.close
   log_file.close
