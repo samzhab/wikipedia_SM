@@ -13,7 +13,7 @@ def start
                   Z - make page_id triples
                   X - make doi title triples'
     # choice = gets.chomp                   # uncomment for user interaction
-    choice = 'z'
+    choice = 'x'
     case choice
     when 'z'
       make_page_id_nt(tsv_file_name)
@@ -39,7 +39,7 @@ def make_page_id_nt(tsv_file_name)
     if id.include?('10.')  # doi id
       n_triple = '<http://en.wikipedia.org/wiki?curid=' +
                  page_id +
-                 "> <http://lod.openaire.eu/vocab/resOriginalID> "\
+                 "> <http://example.org/refersToId> "\
                  '<http://dx.doi.org/' + id + '>.'
       message = '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using doi [' + id + '] from [' +
@@ -70,6 +70,8 @@ def make_doi_nt(tsv_file_name)
   nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without .
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
+              tsv_file_name
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   property_url = 'http://purl.org/dc/terms/title'
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
@@ -104,7 +106,8 @@ def make_doi_nt(tsv_file_name)
       end
     end
   end
-  log_file.puts '[END] finished with --- ' + tsv_file_name
+  log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> ' +
+              tsv_file_name
   nt_file.close
   tsv_file.close
   log_file.close
