@@ -49,74 +49,77 @@ def make_doi_nt(tsv_file_name)
   nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without
   tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
+              tsv_file_name
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   property_url = 'http://purl.org/dc/terms/title'
-    while (line = tsv_file.gets)
-      next unless line.split(' ').last.include?("\/")
-      id = line.split(' ').last if line.split(' ').last.include?('10.')
-      crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
-      formed_uri = crossref_url + id
-      puts '[INFO] looking for resource ---> ' + formed_uri
+  all_ids = []
+  all_urls = []
+  while (line = tsv_file.gets)
+    next unless line.split(' ').last.include?("\/")
+    id = line.split(' ').last if line.split(' ').last.include?('10.')
+    all_ids << line.split(' ').last if line.split(' ').last.include?('10.')
+    crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+    formed_url = crossref_url + id
+    all_urls << formed_url
+  end
+  threads = []
+  range = 0..all_urls.size-1
+  range.each do |num|
+    threads << Thread.new do
+      puts '[INFO] looking for resource ---> ' + all_urls[num]
       begin
-       response = RestClient::Request.execute(method: :get,
-                                               url: Addressable::URI.
-                                                    parse(formed_uri).
-                                                    normalize.to_str,
+        response = RestClient::Request.execute(method: :get,
+                                               url: Addressable::URI
+                                                     .parse(all_urls[num])
+                                                     .normalize.to_str,
                                                timeout: 300)
       rescue RestClient::ExceptionWithResponse => e
         puts e.response
-        response = reconstruct_url(id, crossref_url, log_file)
+        response = recheck_url(all_ids[num], crossref_url, log_file)
       end
       puts '[ERROR] resource not found ' unless response
-      log_file.puts '[ERROR] resource not found for ' + id.to_s unless response
+      log_file.puts '[ERROR] resource not found for ' + all_ids[num].to_s unless response
       next unless response # skip to next line if no resource / response
       json_response = JSON.parse(response.body)
       case json_response['status']
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
-          n_triple = '<http://dx.doi.org/' + id + '>' + ' <' + property_url +
+          n_triple = '<http://dx.doi.org/' + all_ids[num] + '>' + ' <' + property_url +
                      '> ' + title.inspect.to_s + '.'
           nt_file.puts n_triple
-          log_file.puts '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
-                        n_triple + ' using doi [' + id + '] from [' +
-                        tsv_file_name + ']'
         end
-    end
+      end
   end
-  log_file.puts '[END] finished with --- ' + tsv_file_name
+threads.each {|t| t.join}
+end
+  log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> ' +
+              tsv_file_name
   nt_file.close
   tsv_file.close
   log_file.close
 end
 
-def check_response(response, recheck_id, c_url, log_file)
-  case response
-  when 200 then
-    response
-  when 404 then
-    puts '[INFO] re-trying again as --- '
-    reconstruct_url(response, recheck_id, c_url, log_file)
-  end
-end
-
-def reconstruct_url(recheck_id, c_url, log_file)
-    recheck_id = recheck_id.split('/')
-    recheck_id.pop # remove last part
-    recheck_id = recheck_id.join('/')
-    formed_uri = c_url + recheck_id
-    # split id and try again
-    # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
-    puts '[INFO] re-trying again as --- ' + formed_uri.to_s
-    begin
+def recheck_url(recheck_id, c_url, log_file)
+  recheck_id = recheck_id.split('/')
+  recheck_id.pop # remove last part
+  recheck_id = recheck_id.join('/')
+  formed_url = c_url + recheck_id
+  # split id and try again
+  # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
+  puts '[INFO] re-trying again as --- ' + formed_url.to_s
+  begin
     response = RestClient::Request.execute(method: :get,
-                                           url: Addressable::URI.
-                                                parse(formed_uri).
-                                                normalize.to_str,
+                                           url: Addressable::URI
+                                                .parse(formed_url)
+                                                .normalize.to_str,
                                            timeout: 300)
-    rescue RestClient::ExceptionWithResponse => e
-      reconstruct_url(recheck_id, c_url, log_file) unless
-      formed_uri.to_s == c_url.to_s
-    end
+  puts 'SUCCESSFUL'
+  puts formed_url
+  rescue RestClient::ExceptionWithResponse => e
+    recheck_url(recheck_id, c_url, log_file) unless
+    formed_url.to_s == c_url.to_s
+  end
 end
 start
