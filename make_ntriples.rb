@@ -13,7 +13,7 @@ def start
                   Z - make page_id triples
                   X - make doi title triples'
     # choice = gets.chomp                   # uncomment for user interaction
-    choice = 'x'
+    choice = 'z'
     case choice
     when 'z'
       make_page_id_nt(tsv_file_name)
@@ -48,7 +48,7 @@ def make_page_id_nt(tsv_file_name)
     else                  # isbn id
       n_triple = '<http://en.wikipedia.org/wiki?curid=' +
                  page_id +
-                 "> <http://lod.openaire.eu/vocab/resOriginalID> \"" +
+                 "> <http://example.org/refersToId> \"" +
                  id + '".'
       message =  '[INFO] [' + Time.now.to_s + '] saved triple ---> ' +
                    n_triple + ' using isbn [' + id + '] from [' +
