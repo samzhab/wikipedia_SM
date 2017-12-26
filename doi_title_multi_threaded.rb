@@ -79,10 +79,37 @@ def extract_doi_to_file(tsv_file_name)
   to_return
 end
 
-def slice_doi_file_in_half(doi_file)
+def slice_in_half(doi_file)
   # chop in half and save two files with tsv_file_name   appended to end
   # return doi_file array appended with the new file name
-  doi_file << 'part1.doi'
+  doi_path  = Dir.pwd + '/doi_files/' + doi_file[1] + '_part_1' + '.doi'
+  doi_part_file  = File.new(doi_path, 'w') # create nt file - .tsv
+  line_num = 0
+  total_lines = File.open(doi_file[0]) {|f| f.count}
+  last_line = ''
+  # doi_file = File.open(doi_file[0])
+  # while line_num < (total_lines / 2)
+  #   doi_part_file.puts doi_file.gets
+  #   last_line = doi_file.gets
+  #   line_num.next
+  # end
+  puts '/**//*/*/*/* LAST LINE */*//*/**/*/*//*/**//**//*'
+  puts last_line
+  puts '/**//*/*/*/** LAST LINE /*//*/**/*/*//*/**//**//*'
+# end of first part
+  # while line_num < (doi_file[2] / 2)
+  #   doi_part_file.puts tsv_file.gets
+  #   line_num.next
+  # end
+  # while (line = tsv_file.gets)
+  #   next unless line.split(' ').last.include?("\/")
+  #   id = line.split(' ').last if line.split(' ').last.include?('10.')
+  #   all_ids << id
+  #   crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+  #   formed_url = crossref_url + id
+  #   all_urls << formed_url
+  # end
+  doi_file << doi_part_file
   doi_file << 'part2.doi'
   puts '/**//*/*/*/**/*//*/**/*/*//*/**//**//*'
   puts 'chopping doi file in half'
@@ -90,7 +117,7 @@ def slice_doi_file_in_half(doi_file)
   doi_file
 end
 
-def slice_doi_file(doi_file) # :TODO change name
+def slice_random(doi_file) # :TODO change name
   # chop in half and save two files with tsv_file_name   appended to end
   # return doi_file array appended with the new file name
   doi_file << 'part1.doi'
@@ -102,16 +129,22 @@ def slice_doi_file(doi_file) # :TODO change name
   doi_file
 end
 
+def slice_doi_file(doi_file)
+  if doi_file[2].even?
+    doi_file = slice_in_half(doi_file)
+  else
+    doi_file =  slice_random(doi_file)
+  end
+  doi_file
+end
+
 def make_doi_nt(doi_file)
   doi_file[1] = doi_file[1].gsub('.tsv', '')
   nt_path  = Dir.pwd + '/nt_files/' + doi_file[1] + '.nt'
   nt_file  = File.new(nt_path, 'w') # create nt file - .tsv
   line_num = File.open(doi_file[0]) {|f| f.count}
-  if line_num.even?
-    doi_file = slice_doi_file_in_half(doi_file)
-  else
-    doi_file =  slice_doi_file(doi_file)
-  end
+  doi_file << line_num
+  doi_file = slice_doi_file(doi_file)
   puts doi_file.inspect
   # doi_file = open(Dir.pwd + '/doi_file/' + doi_file)
   # log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
