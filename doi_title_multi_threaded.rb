@@ -189,7 +189,7 @@ end
 def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
   threads = []
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
-  crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+  # crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
   property_url = 'http://purl.org/dc/terms/title'
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
     range = 0..ids_to_process.size - 1
