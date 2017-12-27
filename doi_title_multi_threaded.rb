@@ -212,7 +212,7 @@ def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
             # response = recheck_url(id, crossref_url, log_file)
           end
         end
-        puts '[ERROR] resource not found ' unless response
+        # puts '[ERROR] resource not found ' unless response
         log_file.puts '[ERROR] resource not found ' + id.to_s unless response
         next unless response # skip to next in all_urls
         # puts '[ERROR] resource not found ' unless response
