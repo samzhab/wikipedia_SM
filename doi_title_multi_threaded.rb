@@ -17,20 +17,15 @@ def start
   end
   threads.each(&:join)
   puts '[END] finished extracting all dois to separate files '
-
   threads = []
   puts '[START] started composing n-triples from dois '
-  doi_file = []
   doi_files.each do |doi_file|
     threads << Thread.new do
-      doi_file = make_doi_nt(doi_file)
+      make_doi_nt(doi_file)
     end
   end
   threads.each(&:join)
   puts '[END] finished composing n-triples '
-  # File.delete(doi_file[0])
-  # File.delete(doi_file[4])
-  # File.delete(doi_file[5])
 end
 
 def make_page_id_nt(tsv_file_name)
@@ -73,15 +68,15 @@ end
 def slice_in_half(doi_file)
   # slice in half and save two files with tsv_file_name
   # return doi_file array appended with the new file name
-  if doi_file[2].even?
-    middle_section_line = doi_file[2] / 2
-  else
-    middle_section_line = (doi_file[2] / 2).round
-  end
+  middle_section_line = if doi_file[2].even?
+                          doi_file[2] / 2
+                        else
+                          (doi_file[2] / 2).round
+                        end
   part_num = doi_file[3]
   part_id = '_part_'
   doi_path = Dir.pwd + '/doi_files/' + doi_file[1] + part_id +
-                                  (part_num + 1).to_s + '.doi'
+             (part_num + 1).to_s + '.doi'
   doi_part_file = File.new(doi_path, 'w') # create doi file - .tsv
   line_num = 0
   doi_file_to_slice = File.open(doi_file[0])
@@ -95,7 +90,7 @@ def slice_in_half(doi_file)
   doi_part_file.close # end of first part
 
   doi_path = Dir.pwd + '/doi_files/' + doi_file[1] + part_id +
-                                  (part_num + 1).to_s + '.doi'
+             (part_num + 1).to_s + '.doi'
   doi_part_file = File.new(doi_path, 'w') # create doi file - .tsv
   while line_num <= doi_file[2]
     line = doi_file_to_slice.gets
@@ -112,32 +107,33 @@ def slice_in_half(doi_file)
 end
 
 def make_doi_nt(doi_file)
-  doi_file[1]            = doi_file[1].gsub('.tsv', '')
-  nt_path                = Dir.pwd + '/nt_files/' + doi_file[1] + '.nt'
-  nt_file                = File.new(nt_path, 'w') # create nt file - .tsv
-  log_file               = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
-  line_num               = File.open(doi_file[0], &:count)
+  doi_file[1] = doi_file[1].gsub('.tsv', '')
+  nt_path     = Dir.pwd + '/nt_files/' + doi_file[1] + '.nt'
+  nt_file     = File.new(nt_path, 'w') # create nt file - .tsv
+  log_file    = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  line_num    = File.open(doi_file[0], &:count)
   doi_file << line_num
-  doi_file << 0 #parts counter "doi_file[3]" no parts of this file
-  doi_file               = slice_in_half(doi_file)
+  doi_file << 0 # parts counter "doi_file[3]" no parts of this file
+  doi_file = slice_in_half(doi_file)
   puts '[INFO] composing n-triples from dois '
-  doi_part_files         = []
+  doi_part_files = []
   doi_part_files << doi_file[4]    # part 1
   doi_part_files << doi_file[5]    # part 2
-  threads              = []
+  threads = []
   doi_part_files.each do |doi_part_file|
     range                = 1..25
     max_to_process       = 0
     doi_part_file_lines  = File.open(doi_part_file, &:count)
     range.each do |num|
-      max_to_process     = doi_part_file_lines / num if doi_part_file_lines % num == 0
+      if (doi_part_file_lines % num).zero?
+        max_to_process = doi_part_file_lines / num
+      end
     end
     threads << Thread.new do
       all_ids        = []
       all_urls       = []
       doi_part_file  = File.open(doi_part_file)
       crossref_url   = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
-      inner_threads  = []
       while (id      = doi_part_file.gets)
         formed_url = crossref_url + id
         formed_url = Addressable::URI.encode(formed_url.strip)
@@ -145,7 +141,7 @@ def make_doi_nt(doi_file)
         formed_url = URI(formed_url)
         all_ids << id
         all_urls << formed_url
-        next unless all_ids.size == max_to_process    # if equal pause and do >
+        next unless all_ids.size == max_to_process # if equal pause and do >
         setup_process(all_ids, all_urls, nt_file, log_file)
         all_ids    = []
         all_urls   = []
@@ -157,10 +153,6 @@ def make_doi_nt(doi_file)
   log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> '
   nt_file.close
   log_file.close
-  # puts '/***/*/*/*/*/*/*/*/*/*/*//*/'
-  # puts doi_file.inspect
-  # # puts doi_file[0].is_a? File
-  # puts '/***/*/*/*/*/*/*/*/*/*/*//*/'
 end
 
 def setup_process(all_ids, all_urls, nt_file, log_file)
@@ -190,13 +182,11 @@ def setup_process(all_ids, all_urls, nt_file, log_file)
       ids_to_process = []
       urls_to_process = []
     end
-  else
-    # do something else here
   end
 end
 
 def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
-  threads          = []
+  threads = []
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
   property_url = 'http://purl.org/dc/terms/title'
@@ -204,14 +194,14 @@ def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
     range = 0..ids_to_process.size - 1
     range.each do |num|
       threads << Thread.new do
-      id  = ids_to_process[num]
-      url = urls_to_process[num]
+        id = ids_to_process[num]
+        url = urls_to_process[num]
         puts '[INFO] processing ---> ' + id.to_s
         response = Net::HTTP.get_response(url) if url && !url.nil?
         response = check_response(response, id, crossref_url, log_file)
         puts '[ERROR] resource not found ' unless response
         log_file.puts '[ERROR] resource not found ' + id.to_s unless response
-        next unless response  # skip to next in all_urls
+        next unless response # skip to next in all_urls
         # puts '[ERROR] resource not found ' unless response
         # log_file.puts '[ERROR] resource not found ' + id.to_s unless response
         json_response = JSON.parse(response.body)
@@ -219,8 +209,8 @@ def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
         when 'ok'
           titles = json_response['message']['title']
           titles.each do |title|
-            n_triple = '<http://dx.doi.org/' + id.strip + '>' + ' <' + property_url +
-                       '> ' + title.inspect.to_s + '.'
+            n_triple = '<http://dx.doi.org/' + id.strip + '>' + ' <' +
+                       property_url + '> ' + title.inspect.to_s + '.'
             nt_file.puts n_triple
           end
         end
