@@ -209,9 +209,9 @@ def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
         puts '[INFO] processing ---> ' + id.to_s
         response = Net::HTTP.get_response(url) if url && !url.nil?
         response = check_response(response, id, crossref_url, log_file)
-        puts '[ERROR] resource not found ' unless !response.nil?
-        log_file.puts '[ERROR] resource not found ' + id.to_s unless !response.nil?
-        next unless !response.nil? # skip to next in all_urls
+        puts '[ERROR] resource not found ' unless response
+        log_file.puts '[ERROR] resource not found ' + id.to_s unless response
+        next unless response  # skip to next in all_urls
         # puts '[ERROR] resource not found ' unless response
         # log_file.puts '[ERROR] resource not found ' + id.to_s unless response
         json_response = JSON.parse(response.body)
@@ -235,21 +235,21 @@ def check_response(response, recheck_id, c_url, log_file)
   when Net::HTTPSuccess then
     response
   when Net::HTTPNotFound then
-    nil
     # split id and try again
     # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
     # :TODO refactor splitting to a new method
-    # recheck_id = recheck_id.split('/')
-    # recheck_id.pop # remove last part
-    # recheck_id           = recheck_id.join('/')
-    # formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
-    # formed_url           = Addressable::URI.parse(formed_url)
-    # # formed_url = URI.parse(URI.encode(formed_url.strip))
-    # puts '[INFO] re-trying again as --- ' + formed_url.to_s
-    # formed_url           = URI(formed_url)
-    # response             = Net::HTTP.get_response(formed_url)
-    # check_response(response, recheck_id, c_url, log_file) unless
-    # formed_url.to_s == c_url.to_s
+    recheck_id = recheck_id.split('/')
+    recheck_id.pop # remove last part
+    recheck_id           = recheck_id.join('/')
+    formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
+    formed_url           = Addressable::URI.parse(formed_url)
+    # formed_url = URI.parse(URI.encode(formed_url.strip))
+    puts '[INFO] re-trying again as --- ' + formed_url.to_s
+    formed_url           = URI(formed_url)
+    response             = Net::HTTP.get_response(formed_url)
+    check_response(response, recheck_id, c_url, log_file) unless
+    formed_url.to_s == c_url.to_s
   end
 end
+
 start
