@@ -4,25 +4,12 @@ require 'json'
 require 'addressable'
 
 def start
-  tsv_files = Dir.entries(Dir.pwd + '/test_tsv/') # list of files
-  threads      = []
+  tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
+  threads = []
   doi_files = []
   puts '[START] started extracting all dois to separate files '
   tsv_files.each do |tsv_file_name|
     next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
-    # puts '[INFO] found --- ' + tsv_file_name
-    # puts '[INPUT] what would you like to do with these? \
-    #               Z - make page_id triples
-    #               X - make doi title triples'
-    # choice = gets.chomp                   # uncomment for user interaction
-    # choice = 'x'
-    # case choice
-    # when 'z'
-    #   make_page_id_nt(tsv_file_name)
-    # when 'x'
-    #   extract_doi_to_file(tsv_file_name)
-    #   make_doi_nt(tsv_file_name)
-    # end
     threads << Thread.new do
       puts '[INFO] extracting dois from ' + tsv_file_name.to_s
       doi_files << extract_doi_to_file(tsv_file_name)
@@ -31,15 +18,19 @@ def start
   threads.each(&:join)
   puts '[END] finished extracting all dois to separate files '
 
-  threads      = []
+  threads = []
   puts '[START] started composing n-triples from dois '
+  doi_file = []
   doi_files.each do |doi_file|
     threads << Thread.new do
-      make_doi_nt(doi_file)
+      doi_file = make_doi_nt(doi_file)
     end
   end
   threads.each(&:join)
-  puts '[END] finished extracting all dois to separate files '
+  puts '[END] finished composing n-triples '
+  # File.delete(doi_file[0])
+  # File.delete(doi_file[4])
+  # File.delete(doi_file[5])
 end
 
 def make_page_id_nt(tsv_file_name)
@@ -65,10 +56,10 @@ end
 def extract_doi_to_file(tsv_file_name)
   doi_path  = Dir.pwd + '/doi_files/' + tsv_file_name + '.doi'
   doi_file  = File.new(doi_path.gsub('.tsv', ''), 'w') # create doi file
-  tsv_file = open(Dir.pwd + '/test_tsv/' + tsv_file_name)
+  tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
   while (line = tsv_file.gets)
     next unless line.split(' ').last.include?("\/")
-    id           = line.split(' ').last if line.split(' ').last.include?('10.')
+    id = line.split(' ').last if line.split(' ').last.include?('10.')
     doi_file.puts id
   end
   doi_file.close
@@ -80,134 +71,163 @@ def extract_doi_to_file(tsv_file_name)
 end
 
 def slice_in_half(doi_file)
-  # chop in half and save two files with tsv_file_name   appended to end
+  # slice in half and save two files with tsv_file_name
   # return doi_file array appended with the new file name
-  doi_path  = Dir.pwd + '/doi_files/' + doi_file[1] + '_part_1' + '.doi'
-  doi_part_file  = File.new(doi_path, 'w') # create nt file - .tsv
-  line_num = 0
-  total_lines = File.open(doi_file[0]) {|f| f.count}
-  last_line = ''
-  # doi_file = File.open(doi_file[0])
-  # while line_num < (total_lines / 2)
-  #   doi_part_file.puts doi_file.gets
-  #   last_line = doi_file.gets
-  #   line_num.next
-  # end
-  puts '/**//*/*/*/* LAST LINE */*//*/**/*/*//*/**//**//*'
-  puts last_line
-  puts '/**//*/*/*/** LAST LINE /*//*/**/*/*//*/**//**//*'
-# end of first part
-  # while line_num < (doi_file[2] / 2)
-  #   doi_part_file.puts tsv_file.gets
-  #   line_num.next
-  # end
-  # while (line = tsv_file.gets)
-  #   next unless line.split(' ').last.include?("\/")
-  #   id = line.split(' ').last if line.split(' ').last.include?('10.')
-  #   all_ids << id
-  #   crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
-  #   formed_url = crossref_url + id
-  #   all_urls << formed_url
-  # end
-  doi_file << doi_part_file
-  doi_file << 'part2.doi'
-  puts '/**//*/*/*/**/*//*/**/*/*//*/**//**//*'
-  puts 'chopping doi file in half'
-  puts '/**//*/*/*/**/*//*/**/*/*//*/**//**//*'
-  doi_file
-end
-
-def slice_random(doi_file) # :TODO change name
-  # chop in half and save two files with tsv_file_name   appended to end
-  # return doi_file array appended with the new file name
-  doi_file << 'part1.doi'
-  doi_file << 'part2.doi'
-  doi_file << 'part3.doi'
-  puts '/**//*/*/*/**/*//*/**/*/*//*/**//**//*'
-  puts 'chopping doi file in three and saving '
-  puts '/**//*/*/*/**/*//*/**/*/*//*/**//**//*'
-  doi_file
-end
-
-def slice_doi_file(doi_file)
   if doi_file[2].even?
-    doi_file = slice_in_half(doi_file)
+    middle_section_line = doi_file[2] / 2
   else
-    doi_file =  slice_random(doi_file)
+    middle_section_line = (doi_file[2] / 2).round
   end
+  part_num = doi_file[3]
+  part_id = '_part_'
+  doi_path = Dir.pwd + '/doi_files/' + doi_file[1] + part_id +
+                                  (part_num + 1).to_s + '.doi'
+  doi_part_file = File.new(doi_path, 'w') # create doi file - .tsv
+  line_num = 0
+  doi_file_to_slice = File.open(doi_file[0])
+  while line_num < middle_section_line
+    line = doi_file_to_slice.gets
+    doi_part_file.puts line
+    line_num += 1
+  end
+  doi_file << doi_part_file
+  part_num += 1
+  doi_part_file.close # end of first part
+
+  doi_path = Dir.pwd + '/doi_files/' + doi_file[1] + part_id +
+                                  (part_num + 1).to_s + '.doi'
+  doi_part_file = File.new(doi_path, 'w') # create doi file - .tsv
+  while line_num <= doi_file[2]
+    line = doi_file_to_slice.gets
+    doi_part_file.puts line
+    line_num += 1
+  end
+  doi_file << doi_part_file
+  doi_part_file.close # end of second part
+
+  doi_file_to_slice.close
+  part_num += 1
+  doi_file[3] = part_num
   doi_file
 end
 
 def make_doi_nt(doi_file)
-  doi_file[1] = doi_file[1].gsub('.tsv', '')
-  nt_path  = Dir.pwd + '/nt_files/' + doi_file[1] + '.nt'
-  nt_file  = File.new(nt_path, 'w') # create nt file - .tsv
-  line_num = File.open(doi_file[0]) {|f| f.count}
+  doi_file[1]            = doi_file[1].gsub('.tsv', '')
+  nt_path                = Dir.pwd + '/nt_files/' + doi_file[1] + '.nt'
+  nt_file                = File.new(nt_path, 'w') # create nt file - .tsv
+  log_file               = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
+  line_num               = File.open(doi_file[0], &:count)
   doi_file << line_num
-  doi_file = slice_doi_file(doi_file)
-  puts doi_file.inspect
-  # doi_file = open(Dir.pwd + '/doi_file/' + doi_file)
-  # log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
-  # # log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
-  #               # tsv_file_name
-  # all_ids        = []
-  # all_urls       = []
-  # max_to_process = 25
-  # puts '/**//*/**//**/*/*/*/*/*/*/*//**/*//*'
-  #
-  # # while (line = tsv_file.gets)
-  # #   next unless line.split(' ').last.include?("\/")
-  # #   id           = line.split(' ').last if line.split(' ').last.include?('10.')
-  # #   crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
-  # #   formed_url   = crossref_url + id
-  # #   formed_url   = Addressable::URI.encode(formed_url.strip)
-  # #   formed_url   = Addressable::URI.parse(formed_url)
-  # #   formed_url   = URI(formed_url)
-  # #   all_ids << id
-  # #   all_urls << formed_url
-  # #   next unless all_ids.size == max_to_process
-  # #   make_connection(all_ids, all_urls, nt_file, log_file)
-  # #   all_ids            = []
-  # #   all_urls           = []
-  # # end
-  # # log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> ' +
-  # #               tsv_file_name
-  # nt_file.close
-  # log_file.close
-  # doi_file.close
+  doi_file << 0 #parts counter "doi_file[3]" no parts of this file
+  doi_file               = slice_in_half(doi_file)
+  puts '[INFO] composing n-triples from dois '
+  doi_part_files         = []
+  doi_part_files << doi_file[4]    # part 1
+  doi_part_files << doi_file[5]    # part 2
+  threads              = []
+  doi_part_files.each do |doi_part_file|
+    range                = 1..25
+    max_to_process       = 0
+    doi_part_file_lines  = File.open(doi_part_file, &:count)
+    range.each do |num|
+      max_to_process     = doi_part_file_lines / num if doi_part_file_lines % num == 0
+    end
+    threads << Thread.new do
+      all_ids        = []
+      all_urls       = []
+      doi_part_file  = File.open(doi_part_file)
+      crossref_url   = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+      inner_threads  = []
+      while (id      = doi_part_file.gets)
+        formed_url = crossref_url + id
+        formed_url = Addressable::URI.encode(formed_url.strip)
+        formed_url = Addressable::URI.parse(formed_url)
+        formed_url = URI(formed_url)
+        all_ids << id
+        all_urls << formed_url
+        next unless all_ids.size == max_to_process    # if equal pause and do >
+        setup_process(all_ids, all_urls, nt_file, log_file)
+        all_ids    = []
+        all_urls   = []
+      end
+      doi_part_file.close
+    end
+  end
+  threads.each(&:join)
+  log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> '
+  nt_file.close
+  log_file.close
+  # puts '/***/*/*/*/*/*/*/*/*/*/*//*/'
+  # puts doi_file.inspect
+  # # puts doi_file[0].is_a? File
+  # puts '/***/*/*/*/*/*/*/*/*/*/*//*/'
 end
 
-def make_connection(all_ids, all_urls, nt_file, log_file)
+def setup_process(all_ids, all_urls, nt_file, log_file)
+  max_to_process = 10
+  counter = 0
+  ids_to_process = []
+  urls_to_process = []
+  if all_ids.size > max_to_process
+    max_to_process = all_ids.size % max_to_process
+    range = counter..max_to_process
+    range.each do |num|
+      ids_to_process << all_ids[num]
+      urls_to_process << all_urls[num]
+      counter += 1
+    end
+    execute_process(ids_to_process, urls_to_process, nt_file, log_file)
+    ids_to_process = []
+    urls_to_process = []
+    while counter < all_ids.size - 1
+      range = counter..(counter + 10)
+      range.each do |num|
+        ids_to_process << all_ids[num]
+        urls_to_process << all_urls[num]
+        counter += 1
+      end
+      execute_process(ids_to_process, urls_to_process, nt_file, log_file)
+      ids_to_process = []
+      urls_to_process = []
+    end
+  else
+    # do something else here
+  end
+end
+
+def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
+  threads          = []
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
   property_url = 'http://purl.org/dc/terms/title'
-  threads      = []
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
-    range = 0..all_ids.size - 1
+    range = 0..ids_to_process.size - 1
     range.each do |num|
-      id  = all_ids[num]
-      url = all_urls[num]
       threads << Thread.new do
+      id  = ids_to_process[num]
+      url = urls_to_process[num]
         puts '[INFO] processing ---> ' + id.to_s
-        response = Net::HTTP.get_response(url)
+        response = Net::HTTP.get_response(url) if url && !url.nil?
         response = check_response(response, id, crossref_url, log_file)
-        puts '[ERROR] resource not found ' unless response
-        log_file.puts '[ERROR] resource not found ' + id.to_s unless response
-        next unless response # skip to next in all_urls
+        puts '[ERROR] resource not found ' unless !response.nil?
+        log_file.puts '[ERROR] resource not found ' + id.to_s unless !response.nil?
+        next unless !response.nil? # skip to next in all_urls
+        # puts '[ERROR] resource not found ' unless response
+        # log_file.puts '[ERROR] resource not found ' + id.to_s unless response
         json_response = JSON.parse(response.body)
         case json_response['status']
         when 'ok'
           titles = json_response['message']['title']
           titles.each do |title|
-            n_triple = '<http://dx.doi.org/' + id + '>' + ' <' + property_url +
+            n_triple = '<http://dx.doi.org/' + id.strip + '>' + ' <' + property_url +
                        '> ' + title.inspect.to_s + '.'
             nt_file.puts n_triple
           end
         end
       end
     end
+    threads.each(&:join)
   end
-  threads.each(&:join)
 end
 
 def check_response(response, recheck_id, c_url, log_file)
@@ -215,19 +235,21 @@ def check_response(response, recheck_id, c_url, log_file)
   when Net::HTTPSuccess then
     response
   when Net::HTTPNotFound then
+    nil
     # split id and try again
     # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
-    recheck_id = recheck_id.split('/')
-    recheck_id.pop # remove last part
-    recheck_id           = recheck_id.join('/')
-    formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
-    formed_url           = Addressable::URI.parse(formed_url)
-    # formed_url = URI.parse(URI.encode(formed_url.strip))
+    # :TODO refactor splitting to a new method
+    # recheck_id = recheck_id.split('/')
+    # recheck_id.pop # remove last part
+    # recheck_id           = recheck_id.join('/')
+    # formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
+    # formed_url           = Addressable::URI.parse(formed_url)
+    # # formed_url = URI.parse(URI.encode(formed_url.strip))
     # puts '[INFO] re-trying again as --- ' + formed_url.to_s
-    formed_url           = URI(formed_url)
-    response             = Net::HTTP.get_response(formed_url)
-    check_response(response, recheck_id, c_url, log_file) unless
-    formed_url.to_s == c_url.to_s
+    # formed_url           = URI(formed_url)
+    # response             = Net::HTTP.get_response(formed_url)
+    # check_response(response, recheck_id, c_url, log_file) unless
+    # formed_url.to_s == c_url.to_s
   end
 end
 start
