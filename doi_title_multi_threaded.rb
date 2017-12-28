@@ -127,7 +127,8 @@ def make_doi_nt(doi_file)
     doi_part_file_lines  = File.open(doi_part_file, &:count)
     range.each do |num|
       if (doi_part_file_lines % num).zero?
-        max_to_process = doi_part_file_lines / num
+        max_to_process = num
+        # max_to_process = doi_part_file_lines / num
       end
     end
     threads << Thread.new do
