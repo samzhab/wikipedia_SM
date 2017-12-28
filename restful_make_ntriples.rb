@@ -5,7 +5,7 @@ require 'addressable'
 require 'rest-client'
 
 def start
-  tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
+  tsv_files = Dir.entries(Dir.pwd + '/old_tsv/') # list of files
   tsv_files.each do |tsv_file_name|
     next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
     puts '[INFO] found --- ' + tsv_file_name
@@ -47,10 +47,10 @@ end
 def make_doi_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without
-  tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  tsv_file = open(Dir.pwd + '/old_tsv/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
   log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
-              tsv_file_name
+                tsv_file_name
   crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
   property_url = 'http://purl.org/dc/terms/title'
   all_ids = []
@@ -58,13 +58,13 @@ def make_doi_nt(tsv_file_name)
   while (line = tsv_file.gets)
     next unless line.split(' ').last.include?("\/")
     id = line.split(' ').last if line.split(' ').last.include?('10.')
-    all_ids << line.split(' ').last if line.split(' ').last.include?('10.')
+    all_ids << id
     crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
     formed_url = crossref_url + id
     all_urls << formed_url
   end
   threads = []
-  range = 0..all_urls.size-1
+  range = 0..all_urls.size - 1
   range.each do |num|
     threads << Thread.new do
       puts '[INFO] looking for resource ---> ' + all_urls[num]
@@ -86,16 +86,16 @@ def make_doi_nt(tsv_file_name)
       when 'ok'
         titles = json_response['message']['title']
         titles.each do |title|
-          n_triple = '<http://dx.doi.org/' + all_ids[num] + '>' + ' <' + property_url +
+          n_triple = '<http://dx.doi.org/' + all_ids[num].to_s + '>' + ' <' + property_url +
                      '> ' + title.inspect.to_s + '.'
           nt_file.puts n_triple
         end
       end
+    end
+    threads.each(&:join)
   end
-threads.each {|t| t.join}
-end
   log_file.puts '[END] [' + Time.now.to_s + '] finished with ---> ' +
-              tsv_file_name
+                tsv_file_name
   nt_file.close
   tsv_file.close
   log_file.close
@@ -115,8 +115,8 @@ def recheck_url(recheck_id, c_url, log_file)
                                                 .parse(formed_url)
                                                 .normalize.to_str,
                                            timeout: 300)
-  puts 'SUCCESSFUL'
-  puts formed_url
+    puts 'SUCCESSFUL'
+    puts formed_url
   rescue RestClient::ExceptionWithResponse => e
     recheck_url(recheck_id, c_url, log_file) unless
     formed_url.to_s == c_url.to_s

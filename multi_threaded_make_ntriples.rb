@@ -2,11 +2,10 @@
 require 'net/http'
 require 'json'
 require 'addressable'
-require 'rest-client'
 
 def start
-  tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
-  tsv_files.each do |tsv_file_name|
+  test_tsv = Dir.entries(Dir.pwd + '/test_tsv/') # list of files
+  test_tsv.each do |tsv_file_name|
     next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
     puts '[INFO] found --- ' + tsv_file_name
     puts '[INPUT] what would you like to do with these? \
@@ -28,7 +27,7 @@ def make_page_id_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path.remove('.tsv'), 'w') # create nt file without .
   puts '[INFO] processing --- ' + tsv_file_name
-  tsv_file    = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  tsv_file    = open(Dir.pwd + '/test_tsv/' + tsv_file_name)
   while (line = tsv_file.gets)
     page_id = line.split(' ').first unless line.split(' ').first == 'page_id'
     id      = line.split(' ').last unless line.split(' ').last == 'id'
@@ -47,7 +46,7 @@ end
 def make_doi_nt(tsv_file_name)
   nt_path  = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file  = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without .
-  tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  tsv_file = open(Dir.pwd + '/test_tsv/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
   log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
                 tsv_file_name
@@ -90,9 +89,10 @@ def make_connection(all_ids, all_urls, nt_file, log_file)
         puts '[INFO] processing ---> ' + id.to_s
         response = Net::HTTP.get_response(url)
         response = check_response(response, id, crossref_url, log_file)
-        puts '[ERROR] resource not found ' unless response
-        log_file.puts '[ERROR] resource not found ' + id.to_s unless response
-        next unless response # skip to next in all_urls
+        puts '[ERROR] resource not found ' unless !response.nil?
+        log_file.puts '[ERROR] resource not found ' + id.to_s unless !response.nil?
+        # next unless response # skip to next in all_urls
+        next unless !response.nil? # skip to next in all_urls
         json_response = JSON.parse(response.body)
         case json_response['status']
         when 'ok'
@@ -109,24 +109,48 @@ def make_connection(all_ids, all_urls, nt_file, log_file)
   threads.each(&:join)
 end
 
+
 def check_response(response, recheck_id, c_url, log_file)
   case response
   when Net::HTTPSuccess then
     response
   when Net::HTTPNotFound then
+    nil
     # split id and try again
     # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
-    recheck_id = recheck_id.split('/')
-    recheck_id.pop # remove last part
-    recheck_id           = recheck_id.join('/')
-    formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
-    formed_url           = Addressable::URI.parse(formed_url)
-    # formed_url = URI.parse(URI.encode(formed_url.strip))
+    # :TODO refactor splitting to a new method
+    # recheck_id = recheck_id.split('/')
+    # recheck_id.pop # remove last part
+    # recheck_id           = recheck_id.join('/')
+    # formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
+    # formed_url           = Addressable::URI.parse(formed_url)
+    # # formed_url = URI.parse(URI.encode(formed_url.strip))
     # puts '[INFO] re-trying again as --- ' + formed_url.to_s
-    formed_url           = URI(formed_url)
-    response             = Net::HTTP.get_response(formed_url)
-    check_response(response, recheck_id, c_url, log_file) unless
-    formed_url.to_s == c_url.to_s
+    # formed_url           = URI(formed_url)
+    # response             = Net::HTTP.get_response(formed_url)
+    # check_response(response, recheck_id, c_url, log_file) unless
+    # formed_url.to_s == c_url.to_s
   end
 end
+
+# def check_response(response, recheck_id, c_url, log_file)
+#   case response
+#   when Net::HTTPSuccess then
+#     response
+#   when Net::HTTPNotFound then
+#     # split id and try again
+#     # eg. remove 'abstract' from doi	10.1002/jid.1458/abstract, try again
+#     recheck_id = recheck_id.split('/')
+#     recheck_id.pop # remove last part
+#     recheck_id           = recheck_id.join('/')
+#     formed_url           = Addressable::URI.encode((c_url + recheck_id).strip)
+#     formed_url           = Addressable::URI.parse(formed_url)
+#     # formed_url = URI.parse(URI.encode(formed_url.strip))
+#     # puts '[INFO] re-trying again as --- ' + formed_url.to_s
+#     formed_url           = URI(formed_url)
+#     response             = Net::HTTP.get_response(formed_url)
+#     check_response(response, recheck_id, c_url, log_file) unless
+#     formed_url.to_s == c_url.to_s
+#   end
+# end
 start
