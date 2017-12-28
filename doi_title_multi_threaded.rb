@@ -122,7 +122,7 @@ def make_doi_nt(doi_file)
   doi_part_files << doi_file[5]    # part 2
   threads = []
   doi_part_files.each do |doi_part_file|
-    range                = 1..25
+    range                = 1..50
     max_to_process       = 0
     doi_part_file_lines  = File.open(doi_part_file, &:count)
     range.each do |num|
