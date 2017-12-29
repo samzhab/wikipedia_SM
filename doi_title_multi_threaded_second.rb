@@ -134,7 +134,7 @@ def make_doi_nt(doi_file)
       all_ids        = []
       all_urls       = []
       doi_part_file  = File.open(doi_part_file)
-      crossref_url   = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
+      crossref_url   = 'https://api.crossref.org/works/'
       while (id      = doi_part_file.gets)
         formed_url = crossref_url + id
         formed_url = Addressable::URI.encode(formed_url.strip)
@@ -188,7 +188,7 @@ end
 
 def execute_process(ids_to_process, urls_to_process, nt_file, log_file)
   threads = []
-  crossref_uri = URI('https://api.crossref.org/v1/works/http://dx.doi.org/')
+  crossref_uri = URI('https://api.crossref.org/works/')
   # crossref_url = 'https://api.crossref.org/v1/works/http://dx.doi.org/'
   property_url = 'http://purl.org/dc/terms/title'
   Net::HTTP.start(crossref_uri.host, crossref_uri.port) do |_http|
