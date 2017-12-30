@@ -83,7 +83,7 @@ def slice_in_half(doi_file)
   doi_file_to_slice = File.open(doi_file[0])
   while line_num < middle_section_line
     line = doi_file_to_slice.gets
-    doi_part_file.puts line
+    doi_part_file.puts line.strip if !line.nil?
     line_num += 1
   end
   doi_file << doi_part_file
@@ -95,7 +95,7 @@ def slice_in_half(doi_file)
   doi_part_file = File.new(doi_path, 'w') # create doi file - .tsv
   while line_num <= doi_file[2]
     line = doi_file_to_slice.gets
-    doi_part_file.puts line.strip
+    doi_part_file.puts line.strip if !line.nil?
     line_num += 1
   end
   doi_file << doi_part_file
