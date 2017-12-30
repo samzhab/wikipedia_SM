@@ -5,15 +5,15 @@ require 'addressable'
 
 # :TODOs use ruby logger, use rest-client
 def start
-  tsv_files = Dir.entries(Dir.pwd + '/tsv_files/') # list of files
+  tsv_files = Dir.entries(Dir.pwd + '/test_tsv/') # list of files
   tsv_files.each do |tsv_file_name|
     next if (tsv_file_name == '.') || (tsv_file_name == '..') # skip these
     puts '[INFO] found --- ' + tsv_file_name
     puts '[INPUT] what would you like to do with these? \
                   Z - make page_id triples
                   X - make doi title triples'
-    # choice = gets.chomp                   # uncomment for user interaction
-    choice = 'x'
+    #choice = gets.chomp                   # uncomment for user interaction
+    choice = 'z'
     case choice
     when 'z'
       make_page_id_nt(tsv_file_name)
@@ -25,10 +25,10 @@ def start
 end
 
 def make_page_id_nt(tsv_file_name)
-  nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
+  nt_path = Dir.pwd + '/nt_files_to_git/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without .
   puts '[INFO] processing --- ' + tsv_file_name
-  tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  tsv_file = open(Dir.pwd + '/test_tsv/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
   log_file.puts '[INFO] [' + Time.now.to_s + '] started with ---> ' +
                 tsv_file_name
@@ -68,7 +68,7 @@ end
 def make_doi_nt(tsv_file_name)
   nt_path = Dir.pwd + '/nt_files/' + tsv_file_name + '.nt'
   nt_file = File.new(nt_path.gsub('.tsv', ''), 'w') # create nt file without .
-  tsv_file = open(Dir.pwd + '/tsv_files/' + tsv_file_name)
+  tsv_file = open(Dir.pwd + '/test_tsv/' + tsv_file_name)
   log_file = File.new(Dir.pwd + '/log/' + Time.now.to_s + '.txt', 'w')
   log_file.puts '[START] [' + Time.now.to_s + '] started with ---> ' +
                 tsv_file_name

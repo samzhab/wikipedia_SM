@@ -56,7 +56,7 @@ def extract_doi_to_file(tsv_file_name)
   while (line = tsv_file.gets)
     next unless line.split(' ').last.include?("\/")
     id = line.split(' ').last if line.split(' ').last.include?('10.')
-    doi_file.puts id
+    doi_file.puts id.strip
   end
   doi_file.close
   tsv_file.close
