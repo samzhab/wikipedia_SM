@@ -16,7 +16,9 @@ usage with rvm:
 `$ rvm <ruby version>@<gemset>`
 * install bundler gem
 `$ gem install bundler`
-* make script executable 
+* install necessary gems
+`$ bundle`
+* make script executable
 `$ chmod +x <script_name.rb>`
 * run script
 `$ ./<script_name.rb>`
