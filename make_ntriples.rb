@@ -1,9 +1,5 @@
 #!/usr/bin/env ruby
-require 'net/http'
-require 'json'
-require 'addressable'
 
-# :TODOs use ruby logger, use rest-client
 def start
   tsv_files = Dir.entries(Dir.pwd + '/test_tsv/') # list of files
   tsv_files.each do |tsv_file_name|
