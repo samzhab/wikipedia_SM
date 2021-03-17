@@ -1,4 +1,5 @@
 ## Wikipedia Scholarly Article Citations Semantic Manipulation
+![temporary logo](https://bt-strike.s3-us-west-2.amazonaws.com/images/ruby.gif "bt-strike temporary logo")
 
 available tasks
 * extract page_id and id + serialize wikipedia scholarly articles using dataset from https://figshare.com/articles/Wikipedia_Scholarly_Article_Citations/1299540 and save as n-triples.
